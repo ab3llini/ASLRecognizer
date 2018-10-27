@@ -2,7 +2,7 @@
 
 
 # ASLRecognizer
-Machine Learning used to translate hand gestures of the American Sign Language into text sequences.
+Machine Learning used to translate hand gestures of the American Sign Language into meaningful text sequences.
 
 ## Group
 The group is composed by:
