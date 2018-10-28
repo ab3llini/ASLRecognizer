@@ -1,0 +1,8 @@
+# IntelliJ project files
+.idea
+.venv
+.git
+TFCPU
+.TFCPU
+__pycache__
+resources
