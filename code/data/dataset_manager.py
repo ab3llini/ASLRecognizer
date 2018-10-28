@@ -1,6 +1,8 @@
 import os
 import numpy as np
 from skimage.io import imread
+import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 # ABSOLUTE PATH OF THIS FILE
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -52,21 +54,21 @@ class DatasetManager:
         self.index = 0
         if verbose:
             print("PREPARING TRAINING SAMPLES' PATHS")
-        self.train_x, self.train_y = DatasetManager.__read_and_format_paths_train(self.trainpath)
+        self.train_x, self.train_y = DatasetManager.__read_and_format_paths_train(self.trainpath, verbose)
         self.n_train_samples = len(self.train_x)
 
         if verbose:
             print("PREPARING TEST SAMPLES' PATHS")
-        self.test_x, self.test_y = DatasetManager.__read_and_format_paths_test(self.testpath)
+        self.test_x, self.test_y = DatasetManager.__read_and_format_paths_test(self.testpath, verbose)
         self.n_test_samples = len(self.test_x)
 
     @classmethod
-    def __read_and_format_paths_train(cls, path):
+    def __read_and_format_paths_train(cls, path, verbose=False):
         """ Private static method that helps the constructor formatting the paths and classes' arrays."""
         x = []
         y = []
         dirs = os.listdir(path)
-        for direct in dirs:
+        for direct in dirs if not verbose else tqdm.tqdm(dirs):
             index = cls.labels_to_index_dict[direct]
             dir_abs_path = os.path.join(path, direct)
             ims = os.listdir(dir_abs_path)
@@ -79,12 +81,12 @@ class DatasetManager:
         return np.array(x), np.array(y)
 
     @classmethod
-    def __read_and_format_paths_test(cls, path):
+    def __read_and_format_paths_test(cls, path, verbose=False):
         """ Private static method that helps the constructor formatting the paths and classes' arrays."""
         x = []
         y = []
         images = os.listdir(path)
-        for im in images:
+        for im in images if not verbose else tqdm.tqdm(images):
             final_path = os.path.join(path, im)
             x.append(final_path)
             y_sample = np.zeros([cls.n_classes], dtype=np.uint8)
@@ -93,6 +95,10 @@ class DatasetManager:
         return np.array(x), np.array(y)
 
     def get_batch_train(self, size):
+        """Single thread training batch reader.
+        Works with both rotational and non-rotational DatasetManagers.
+        :param size: the size of the batch to be read
+        """
         if self.index == self.n_train_samples:
             raise EndOfDatasetException(EndOfDatasetException.MSG)
         x = []
@@ -108,6 +114,66 @@ class DatasetManager:
                     break
         return np.array(x), np.array(y)
 
+    def get_batch_train_multithreaded(self, size, workers):
+        """Single thread training batch reader.
+        Works only with rotational DatasetManagers.
+        :param size: the size of the batch to be read
+        """
+        if not self.rotational:
+            raise NotRotationalException(NotRotationalException.MSG)
+        x = None
+        y = None
+        size_per_worker = []
+        indices = []
+        app = size
+        spr = int(np.ceil(size/workers))
+        while app > 0:
+            if app > spr:
+                size_per_worker.append(spr)
+                app -= spr
+            else:
+                size_per_worker.append(app)
+                app = 0
+        for i in range(workers):
+            f = self.index
+            t = (self.index + size_per_worker[i]) % self.n_train_samples
+            self.index = t
+            indices.append([f, t])
+
+        executor = ThreadPoolExecutor(max_workers=workers)
+        futures = [executor.submit(self.__read_from_to, indices[i][0], indices[i][1], True)
+                   for i in range(workers)]
+        results = [future.result() for future in futures]
+        for i in range(workers):
+            if x is None:
+                x = results[i][0]
+                y = results[i][1]
+            else:
+                x = np.concatenate((x, results[i][0]))
+                y = np.concatenate((y, results[i][1]))
+        return np.array(x), np.array(y)
+
+    def __read_from_to(self, f, t, train):
+        """Provate method that supports the get_batch_train_multithreaded method."""
+        x = []
+        y = []
+        i = f
+        if train:
+            while i != t:
+                x.append(imread(self.train_x[i]))
+                y.append(self.train_y[i])
+                i += 1
+                if i == self.n_train_samples:
+                    i = 0
+        else:
+            while i != t:
+                x.append(imread(self.test_x[i]))
+                y.append(self.test_y[i])
+                i += 1
+                if i == self.n_test_samples:
+                    i = 0
+        return np.array(x), np.array(y)
+
     def get_test(self):
         x = []
         y = []
@@ -117,6 +183,10 @@ class DatasetManager:
         return np.array(x), np.array(y)
 
     def shuffle_train(self):
+        """
+        Shuffles the elements in the train set and the corresponding classes by keeping the relative order of the pairs.
+        :return: nothing
+        """
         x = self.train_x
         y = self.train_y
         rx = []
@@ -132,20 +202,24 @@ class DatasetManager:
 
 
 class EndOfDatasetException(Exception):
-        MSG = "All the data were already read and this object doesn't have the 'Rotational' attribute set. Try \n" \
-              "setting the attribute to true when creating the DatasetManager object. This will make the iterator \n" \
-              "restart when all the images were read."
+    MSG = "All the data were already read and this object doesn't have the 'Rotational' attribute set. Try \n" \
+          "setting the attribute to true when creating the DatasetManager object. This will make the iterator \n" \
+          "restart when all the images were read."
+
+
+class NotRotationalException(Exception):
+    MSG = "This method requires the dataset to be rotational."
 
 
 if __name__ == "__main__":
     import code.data.utilities as u
-    dm = DatasetManager()
+    dm = DatasetManager(rotational=True)
     dm.shuffle_train()
-    x, y = dm.get_batch_train(1000)
+    x, y = dm.get_batch_train_multithreaded(1000, 10)
     u.showimage(x[0])
     print(y[0])
     print(x.shape, y.shape)
-    x, y = dm.get_test()
+    x, y = dm.get_batch_train_multithreaded(1000, 10)
     u.showimage(x[0])
     print(y[0])
     print(x.shape, y.shape)
