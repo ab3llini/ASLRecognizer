@@ -6,6 +6,7 @@ TFCPU
 .TFCPU
 __pycache__
 resources
+dataset/*
 
 
 # Created by https://www.gitignore.io/api/pycharm
