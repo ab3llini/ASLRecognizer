@@ -2,23 +2,43 @@ import os
 import numpy as np
 from skimage.io import imread
 
-
+# ABSOLUTE PATH OF THIS FILE
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class DatasetManager:
+    """
+    The DatasetManager class has the purpose of handling and abstracting for faster use the operations that will
+    have to be done on the dataset (shuffle, read, handling paths and classes, etc.).
+    """
 
+    # this dictionary maps every label's name to an array index. Data are of type <x, y>, where x is the image and y
+    # is a 29-elements array containing all zeros but a single 1 in the corresponding index
     labels_to_index_dict = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7, "I": 8, "J": 9, "K": 10,
                             "L": 11, "M": 12, "N": 13, "O": 14, "P": 15, "Q": 16, "R": 17, "S": 18, "T": 19, "U": 20,
                             "V": 21, "W": 22, "X": 23, "Y": 24, "Z": 25, "del": 26, "nothing": 27, "space": 28}
 
+    # this dictionary exploits the reverse task wrt the previous dictionary. Will be useful to handle the conversion
+    # of the models' numeric output to the corresponding letter in an efficient fast way.
     index_to_labels_dict = {0: "A", 1: "B", 2: "C", 3: "D", 4: "E", 5: "F", 6: "G", 7: "H", 8: "I", 9: "J", 10: "K",
                             11: "L", 12: "M", 13: "N", 14: "O", 15: "P", 16: "Q", 17: "R", 18: "S", 19: "T", 20: "U",
                             21: "V", 22: "W", 23: "X", 24: "Y", 25: "Z", 26: "del", 27: "nothing", 28: "space"}
 
+    # number of classes
     n_classes = 29
 
-    def __init__(self, path_train=None, path_test=None, rotational=False):
+    def __init__(self, path_train=None, path_test=None, rotational=False, verbose=True):
+        """
+        Preprocesses the images' paths and prepares them to be read in batches.
+        :param path_train: path to the folder containing the training samples. If none, the path
+                           ./../../resources/asl_alphabet_train will be used.
+        :param path_test: path to the folder containing the test samples. If none, the path
+                           ./../../resources/asl_alphabet_test will be used.
+        :param rotational: if true, the get_batch_train method will always supply an output. When all the samples have
+                           been used at least once, it restarts from the beginning. If false, if all the samples have
+                           been used, an exception is thrown. Setting this to True is ideal when training a model.
+        :param verbose:    if True, this constructor will print some informative text about what it is doing.
+        """
         if path_train is None:
             self.trainpath = os.path.join(dir_path, "..", "..", "resources", "asl_alphabet_train")
         else:
@@ -30,30 +50,49 @@ class DatasetManager:
 
         self.rotational = rotational
         self.index = 0
+        if verbose:
+            print("PREPARING TRAINING SAMPLES' PATHS")
         self.train_x, self.train_y = DatasetManager.__read_and_format_paths_train(self.trainpath)
         self.n_train_samples = len(self.train_x)
 
-        #self.test_x, self.test_y = DatasetManager.__read_and_format(self.testpath)
+        if verbose:
+            print("PREPARING TEST SAMPLES' PATHS")
+        self.test_x, self.test_y = DatasetManager.__read_and_format_paths_test(self.testpath)
+        self.n_test_samples = len(self.test_x)
 
     @classmethod
-    def __read_and_format_paths_train(cls, path, test=False):
+    def __read_and_format_paths_train(cls, path):
+        """ Private static method that helps the constructor formatting the paths and classes' arrays."""
         x = []
         y = []
-        if not test:
-            dirs = os.listdir(path)
-            for direct in dirs:
-                index = cls.labels_to_index_dict[direct]
-                dir_abs_path = os.path.join(path, direct)
-                ims = os.listdir(dir_abs_path)
-                for im in ims:
-                    final_path = os.path.join(dir_abs_path, im)
-                    x.append(final_path)
-                    y_sample = np.zeros([cls.n_classes], dtype=np.uint8)
-                    y_sample[index] = 1
-                    y.append(y_sample)
+        dirs = os.listdir(path)
+        for direct in dirs:
+            index = cls.labels_to_index_dict[direct]
+            dir_abs_path = os.path.join(path, direct)
+            ims = os.listdir(dir_abs_path)
+            for im in ims:
+                final_path = os.path.join(dir_abs_path, im)
+                x.append(final_path)
+                y_sample = np.zeros([cls.n_classes], dtype=np.uint8)
+                y_sample[index] = 1
+                y.append(y_sample)
         return np.array(x), np.array(y)
 
-    def get_batch(self, size):
+    @classmethod
+    def __read_and_format_paths_test(cls, path):
+        """ Private static method that helps the constructor formatting the paths and classes' arrays."""
+        x = []
+        y = []
+        images = os.listdir(path)
+        for im in images:
+            final_path = os.path.join(path, im)
+            x.append(final_path)
+            y_sample = np.zeros([cls.n_classes], dtype=np.uint8)
+            y_sample[cls.labels_to_index_dict[im.split("_")[0]]] = 1
+            y.append(y_sample)
+        return np.array(x), np.array(y)
+
+    def get_batch_train(self, size):
         if self.index == self.n_train_samples:
             raise EndOfDatasetException(EndOfDatasetException.MSG)
         x = []
@@ -67,6 +106,14 @@ class DatasetManager:
                     self.index = 0
                 else:
                     break
+        return np.array(x), np.array(y)
+
+    def get_test(self):
+        x = []
+        y = []
+        for i in range(self.n_test_samples):
+            x.append(imread(self.test_x[i]))
+            y.append(self.test_y[i])
         return np.array(x), np.array(y)
 
     def shuffle_train(self):
@@ -94,7 +141,12 @@ if __name__ == "__main__":
     import code.data.utilities as u
     dm = DatasetManager()
     dm.shuffle_train()
-    x, y = dm.get_batch(1000)
+    x, y = dm.get_batch_train(1000)
     u.showimage(x[0])
     print(y[0])
     print(x.shape, y.shape)
+    x, y = dm.get_test()
+    u.showimage(x[0])
+    print(y[0])
+    print(x.shape, y.shape)
+
