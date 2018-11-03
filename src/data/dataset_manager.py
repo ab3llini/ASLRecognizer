@@ -21,7 +21,7 @@ class DatasetManager:
     x, y = dm.get_batch_train_multithreaded(size=1000, workers=10)
 
     # x, y are respectively an array of 1000 images and an array of 1000 one-hot-encoded classes (29x1 array with a
-    # sigle 1)
+    # single 1)
 
 
     """
@@ -130,6 +130,9 @@ class DatasetManager:
         """Single thread training batch reader.
         Works only with rotational DatasetManagers.
         :param size: the size of the batch to be read
+        :param workers: the number of threads that will be used to split the  I/O workload
+        :return a tuple (x, y) containing the requested samples and the corresponding classes.
+                x will be an array of shape (size, 200, 200, 3) while y will be an array of shape (size, 29)
         """
         if not self.rotational:
             raise NotRotationalException(NotRotationalException.MSG)
