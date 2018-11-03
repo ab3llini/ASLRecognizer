@@ -12,6 +12,18 @@ class DatasetManager:
     """
     The DatasetManager class has the purpose of handling and abstracting for faster use the operations that will
     have to be done on the dataset (shuffle, read, handling paths and classes, etc.).
+
+    EXAMPLE USAGE
+
+    dm = DatasetManager(rotational=True) # creates the object and sets it as rotational. It means that it will behave
+                                         # as a circular iterator
+    dm.shuffle_train()
+    x, y = dm.get_batch_train_multithreaded(size=1000, workers=10)
+
+    # x, y are respectively an array of 1000 images and an array of 1000 one-hot-encoded classes (29x1 array with a
+    # sigle 1)
+
+
     """
 
     # this dictionary maps every label's name to an array index. Data are of type <x, y>, where x is the image and y
@@ -212,15 +224,12 @@ class NotRotationalException(Exception):
 
 
 if __name__ == "__main__":
-    import code.data.utilities as u
+    import src.data.utilities as u
     dm = DatasetManager(rotational=True)
     dm.shuffle_train()
-    x, y = dm.get_batch_train_multithreaded(1000, 10)
+    x, y = dm.get_batch_train_multithreaded(size=1000, workers=10)
     u.showimage(x[0])
     print(y[0])
-    print(x.shape, y.shape)
-    x, y = dm.get_batch_train_multithreaded(1000, 10)
-    u.showimage(x[0])
-    print(y[0])
+    print(DatasetManager.index_to_labels_dict[np.argmax(y)])
     print(x.shape, y.shape)
 
