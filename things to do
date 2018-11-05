@@ -1,0 +1,33 @@
+1. **** IMPORTANT FOR GENERALIZATION ****
+    We need a script that takes as input a video (in the format you like) and a path and:
+        - creates the destination folder at the given path;
+        - decomposes the video into frames;
+        - resizes each frame to 200x200x3;
+        - saves each frame as .jpg separately in the destination folder.
+    We need this to fastly produce new train/test samples.
+
+2.  **** IMPORTANT FOR GENERALIZATION ****
+    Data Augmentation module that can work in two ways:
+    2.1.
+        ONLINE
+            Given an image (numpy array 200x200x3) object and a number n, produces and returns n augmented images
+            starting from the given one (color filters, shifting, etc. ). The produced images are returned in a new
+            numpy array nx200x200x3
+    2.2.
+        OFFLINE
+            Given an image (numpy array 200x200x3) object, a path and a number n, produces n augmented images
+            starting from the given one and saves sequentially in the given destination folder. Having a customizable4
+            name convention would be nice.
+
+3.
+    Try out a 29-class CNN classifier
+
+4.
+    Try out 29 one-versus-all CNN classifiers
+
+5.
+    Try out k-nn
+
+6.
+
+
