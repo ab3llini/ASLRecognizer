@@ -15,7 +15,7 @@ class DatasetManager:
 
     EXAMPLE USAGE
 
-    dm = DatasetManager(rotational=True) # creates the object and sets it as rotational. It means that it will behave
+    dm = DatasetManager() # creates the object and sets it as rotational. It means that it will behave
                                          # as a circular iterator
     dm.shuffle_train()
     x, y = dm.get_batch_train_multithreaded(size=1000, workers=10)
@@ -51,7 +51,7 @@ class DatasetManager:
     # number of classes
     n_classes = 29
 
-    def __init__(self, path_train=None, path_test=None, rotational=False, verbose=True):
+    def __init__(self, path_train=None, path_test=None, rotational=True, verbose=True):
         """
         Preprocesses the images' paths and prepares them to be read in batches.
         :param path_train: path to the folder containing the training samples. If none, the path
