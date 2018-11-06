@@ -3,6 +3,8 @@ import numpy as np
 from skimage.io import imread
 import tqdm
 from concurrent.futures import ThreadPoolExecutor
+from src.data.preprocessing.NoPreprocessing import NoPreprocessing
+
 
 # ABSOLUTE PATH OF THIS FILE
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -51,11 +53,17 @@ class DatasetManager:
     # number of classes
     n_classes = 29
 
-    def __init__(self, path_train=None, path_test=None, rotational=True, verbose=True):
+    def __init__(self, path_train=None, path_test=None, rotational=True, verbose=True, preprocessing=NoPreprocessing()):
         """
         Preprocesses the images' paths and prepares them to be read in batches.
+        :param preprocessing: an object that is child of src.data.preprocessing.AbstractPreprocessing.
+                              This object defines a preprocessing function that is applied to all samples when they are
+                              read from memory. This comes in handy when it is necessary to apply some transformation
+                              to all the samples at run time and helps keeping the code clean.
+                              Default is NoPreprocessing -> a child of src.data.preprocessing.AbstractPreprocessing
+                              that simply returns the sample as it is given (without modifications).
         :param path_train: path to the folder containing the training samples. If none, the path
-                           ./../../resources/asl_alphabet_train will be used.
+                           ./../../dataset/asl_alphabet_train will be used.
         :param path_test: path to the folder containing the test samples. If none, the path
                            ./../../resources/asl_alphabet_test will be used.
         :param rotational: if true, the get_batch_train method will always supply an output. When all the samples have
@@ -64,14 +72,15 @@ class DatasetManager:
         :param verbose:    if True, this constructor will print some informative text about what it is doing.
         """
         if path_train is None:
-            self.trainpath = os.path.join(dir_path, "..", "..", "resources", "asl_alphabet_train")
+            self.trainpath = os.path.join(dir_path, "..", "..", "dataset", "asl_alphabet_train")
         else:
             self.trainpath = path_train
         if path_test is None:
-            self.testpath = os.path.join(dir_path, "..", "..", "resources", "asl_alphabet_test")
+            self.testpath = os.path.join(dir_path, "..", "..", "dataset", "asl_alphabet_test")
         else:
             self.testpath = path_test
 
+        self.preprocess_object = preprocessing
         self.rotational = rotational
         self.index = 0
         if verbose:
@@ -134,6 +143,7 @@ class DatasetManager:
                     self.index = 0
                 else:
                     break
+        x = self.preprocess_object.preprocess_array(x)
         return np.array(x), np.array(y)
 
     def get_batch_train_multithreaded(self, size, workers):
@@ -146,6 +156,8 @@ class DatasetManager:
         """
         if not self.rotational:
             raise NotRotationalException(NotRotationalException.MSG)
+        if size < workers:
+            workers = size
         x = None
         y = None
         size_per_worker = []
@@ -197,6 +209,7 @@ class DatasetManager:
                 i += 1
                 if i == self.n_test_samples:
                     i = 0
+        x = self.preprocess_object.preprocess_array(x)
         return np.array(x), np.array(y)
 
     def get_test(self):
@@ -205,6 +218,7 @@ class DatasetManager:
         for i in range(self.n_test_samples):
             x.append(imread(self.test_x[i]))
             y.append(self.test_y[i])
+        x = self.preprocess_object.preprocess_array(x)
         return np.array(x), np.array(y)
 
     def shuffle_train(self):
@@ -236,11 +250,12 @@ class NotRotationalException(Exception):
     MSG = "This method requires the dataset to be rotational."
 
 
+# if this code works and shows an image then you're all set up
 if __name__ == "__main__":
     import src.data.utilities as u
-    dm = DatasetManager(rotational=True)
+    dm = DatasetManager()
     dm.shuffle_train()
-    x, y = dm.get_batch_train_multithreaded(size=1000, workers=10)
+    x, y = dm.get_batch_train_multithreaded(size=4000, workers=10)
     u.showimage(x[0])
     print(y[0])
     print(DatasetManager.index_to_labels_dict[np.argmax(y)])
