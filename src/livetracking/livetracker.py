@@ -1,14 +1,15 @@
 import numpy as np
 import src.livetracking.model.AllAModel as AllAModel
 import src.livetracking.model.RandomModel as RandomModel
+import src.livetracking.model.KerasModel as KerasModel
 import cv2
-from matplotlib import pyplot
+import keras
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from src.data.dataset_manager import DatasetManager
 
 # to change
-model = RandomModel.RandomModel(None)
+model = KerasModel.KerasModel(keras.models.load_model("./../../resources/keras_saves/matteo_simple_thin.h5"))
 classes = DatasetManager.classes_list_single_letter
 cap = cv2.VideoCapture(0)
 shape = None
@@ -20,7 +21,7 @@ while True:
             shape = np.shape(frame)
             bars_positions = np.floor(np.linspace(0, shape[1], 29)).astype(np.int32)
 
-        pred = model.predict(frame) * 10
+        pred = model.predict(frame).squeeze() * 10
 
         fig = Figure()
 
