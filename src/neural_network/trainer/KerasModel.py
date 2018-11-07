@@ -11,14 +11,14 @@ class Kerasmodel:
     Using an object of this class, all those operations are masked and the problem becomes
     transparent to the user of KerasModel.
     """
-    def __init__(self, train_set_provider, opt, loss='binary_crossentropy', metrics='accuracy',
+    def __init__(self, train_set_provider, opt, loss='categorical_crossentropy', metrics=k.metrics.categorical_accuracy,
                  path=None, model=None):
         """
         Constructor of the KerasModel object.
         :param train_set_provider: src.data.dataset_manager.DatasetManager object. This is the object that will be
                                    to read chunks of the dataset, using its get_batch_train_multithreaded method
         :param opt: optimizer that has to be used to train the model. Generally the Adam optimizer works well
-        :param loss: the loss function to be minimized during the training. Default value is binary_crossentropy, which
+        :param loss: the loss function to be minimized during the training. Default value is categorical_crossentropy, which
                      generally works fine in classification tasks
         :param metrics: metrics for which the model will be evaluated during training. Default value is accuracy.
         :param path: if the model that has to be trained already exists as a .h5 file, then this must be different

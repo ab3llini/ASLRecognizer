@@ -1,1 +1,51 @@
-# There will be something really cool here soon :P
+import keras
+import keras.layers as kl
+
+
+def simple_sequential(wd_rate=None):
+    reg = keras.regularizers.l2(wd_rate)
+    inputs = kl.Input(shape=[200, 200, 3])
+    x = kl.Conv2D(filters=140, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(inputs)
+    x = kl.Conv2D(filters=140, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=140, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=140, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=150, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=160, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=160, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=160, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=160, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=170, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=150, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=150, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=140, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=120, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=120, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=100, kernel_size=[3, 3], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Flatten()(x)
+    x = kl.Dense(units=30, activation='relu', use_bias=True)(x)
+    x = kl.Dropout(rate=0.30)(x)
+    x = kl.Dense(units=29, activation='sigmoid', use_bias=True)(x)
+    return keras.Model(inputs=(inputs, ), outputs=(x, ))
+
+
+def thin_sequential(wd_rate=None):
+    reg = keras.regularizers.l2(wd_rate)
+    inputs = kl.Input(shape=[200, 200, 3])
+    x = kl.Conv2D(filters=30, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(inputs)
+    x = kl.Conv2D(filters=30, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=60, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=60, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=60, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=60, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Flatten()(x)
+    x = kl.Dense(units=100, activation='relu', use_bias=True)(x)
+    x = kl.Dropout(rate=0.20)(x)
+    x = kl.Dense(units=29, activation='softmax', use_bias=True)(x)
+    return keras.Model(inputs=(inputs, ), outputs=(x, ))

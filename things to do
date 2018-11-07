@@ -1,4 +1,4 @@
-1. **** IMPORTANT FOR GENERALIZATION ****
+1. **** IMPORTANT FOR GENERALIZATION ****       >>>>>> ALBERTO <<<<<<
     We need a script that takes as input a video (in the format you like) and a path and:
         - creates the destination folder at the given path;
         - decomposes the video into frames;
@@ -6,7 +6,7 @@
         - saves each frame as .jpg separately in the destination folder.
     We need this to fastly produce new train/test samples.
 
-2.  **** IMPORTANT FOR GENERALIZATION ****
+2.  **** IMPORTANT FOR GENERALIZATION **** >>>>>> DAVIDE <<<<<<
     Data Augmentation module that can work in two ways:
     2.1.
         ONLINE
@@ -19,15 +19,15 @@
             starting from the given one and saves sequentially in the given destination folder. Having a customizable4
             name convention would be nice.
 
-3.
+3.  >>>>>> MATTEO <<<<<<
     Try out a 29-class CNN classifier
 
-4.
+4.  >>>>>> YATRI - SIMRAN <<<<<<
     Try out 29 one-versus-all CNN classifiers
 
 5.
     Try out k-nn
 
-6.
-
+6.  >>>>>> FEDERICO <<<<<<
+    SVM
 
