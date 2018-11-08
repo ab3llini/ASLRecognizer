@@ -26,7 +26,7 @@ if __name__ == '__main__':
     trainer = Kerasmodel(train_set_provider=data,
                          model=model,
                          opt=keras.optimizers.SGD(lr=lr))
-    trainer.train(iterations=10,
+    trainer.train(iterations=20,
                   epochs_per_iteration=2,
                   validation=(test_x, test_y),
                   sleep_time=3*60,
