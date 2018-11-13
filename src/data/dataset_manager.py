@@ -100,7 +100,10 @@ class DatasetManager:
         y = []
         dirs = os.listdir(path)
         for direct in dirs if not verbose else tqdm.tqdm(dirs):
-            index = cls.labels_to_index_dict[direct]
+            try:
+                index = cls.labels_to_index_dict[direct]
+            except KeyError:
+                index = cls.labels_to_index_dict[direct.split("_")[0]]
             dir_abs_path = os.path.join(path, direct)
             ims = os.listdir(dir_abs_path)
             for im in ims:
