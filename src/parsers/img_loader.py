@@ -16,6 +16,9 @@ from matplotlib import pyplot as plt
 # under a parent directory named dataset in the root of the project
 # It will not be synchronized to github due to its size (approx 1GB)
 
+# ABSOLUTE PATH OF THIS FILE
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 # Default parameters. Do not edit unless sure of what you are doing.
 bpath_def = '../../dataset/'
 trpath_def = 'asl_alphabet_train/'
@@ -62,8 +65,10 @@ class DatasetParser:
                  testingpath=tspath_def,
                  verbose=True,
                  ):
-        self.tr_path = basepath + trainingpath
-        self.ts_path = basepath + testingpath
+
+        self.tr_path = os.path.join(dir_path, basepath, trainingpath)
+        self.ts_path = os.path.join(dir_path, basepath, testingpath)
+
         self.multithread = multithread
         self.maxthreads = maxthreads
         self.verbose = verbose
@@ -345,9 +350,12 @@ otherwise keep it less than of equal to
 ds_parser = DatasetParser(verbose=True)
 training_set = TrainingSetIterator(parser=ds_parser, shuffle=True, batchsize=3625, seed=None)
 
+
 for x, y in training_set:
     print('Printing the first image of this new batch..')
-    plt.imshow(x[0]/255.)
+
     print('The class vector corresponding to the first image is..')
-    print(y[0])
-    plt.show()
+    for i in range(10):
+        plt.imshow(x[i] / 255.)
+        print(y[i])
+        plt.show()
