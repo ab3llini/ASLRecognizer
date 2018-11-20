@@ -28,9 +28,9 @@ def thin_sequential_single(wd_rate=None):
     return keras.Model(inputs=(inputs, ), outputs=(x, ))
 
 
-iterations = 1
-epochs_per_iteration = 1
-chunk_size = 50
+iterations = 20
+epochs_per_iteration = 2
+chunk_size = 3000
 batch_size = 50
 wd = 1e-9
 lr = 0.5e-4
@@ -88,7 +88,7 @@ def train_models():
 
     for c in classes_def:
 
-        training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size, limit=50)
+        training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size)
 
         print('Building cnn model for class ' + c)
 
