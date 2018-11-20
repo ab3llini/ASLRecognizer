@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Default parameters. Do not edit unless sure of what you are doing.
-bpath_def = '../../dataset/'
+bpath_def = '../../../dataset/'
 trpath_def = 'asl_alphabet_train/'
 tspath_def = 'asl_alphabet_test/'
 classes_def = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'del', 'nothing', 'space']
@@ -258,10 +258,10 @@ class TrainingSetIterator:
     :param classes: leave empty to create batches from all the training classes, or specify your own by passing a list
     """
 
-    def __init__(self, parser, batchsize=1000, shuffle=False, seed=None, classes=None):
+    def __init__(self, parser, chunksize=1000, shuffle=False, seed=None, classes=None):
         self.parser = parser
         self.processed = 0
-        self.batchsize = batchsize
+        self.batchsize = chunksize
         self.shuffle = shuffle
         self.seed = seed
         self.classes = classes if classes is not None and len(classes) > 0 else classes_def
@@ -346,7 +346,7 @@ class TrainingSetIterator:
 """
 After various test, batch sizes around 4350 should be fine, 
 otherwise keep it less than of equal to
-"""
+
 ds_parser = DatasetParser(verbose=True)
 training_set = TrainingSetIterator(parser=ds_parser, shuffle=True, batchsize=3625, seed=None)
 
@@ -359,3 +359,4 @@ for x, y in training_set:
         plt.imshow(x[i] / 255.)
         print(y[i])
         plt.show()
+"""
