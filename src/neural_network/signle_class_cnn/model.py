@@ -131,8 +131,8 @@ def train_models():
         model.save(model_name)
 
 
-test_x, test_y = DatasetManager().get_test()
+# test_x, test_y = DatasetManager().get_test()
 
 
-# train_models()
-print(predict(test_x))
+train_models()
+# print(predict(test_x))
