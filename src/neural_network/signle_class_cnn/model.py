@@ -1,3 +1,5 @@
+from keras.engine.saving import load_model
+
 from data.dataset_manager import DatasetManager
 from parsers.img_loader import *
 
@@ -5,6 +7,7 @@ import keras
 import keras.layers as kl
 import numpy as np
 
+import operator
 
 def thin_sequential_single(wd_rate=None):
     reg = keras.regularizers.l2(wd_rate)
@@ -25,60 +28,110 @@ def thin_sequential_single(wd_rate=None):
     return keras.Model(inputs=(inputs, ), outputs=(x, ))
 
 
-iterations = 20
-epochs_per_iteration = 2
-chunk_size = 3000
-batch_size = 10
+iterations = 1
+epochs_per_iteration = 1
+chunk_size = 50
+batch_size = 50
+wd = 1e-9
 lr = 0.5e-4
-optimizer = keras.optimizers.SGD(lr=lr)
+optimizer = 'sgd'
 loss = 'binary_crossentropy'
-metrics = keras.metrics.binary_accuracy
+metrics = 'binary_accuracy'
+model_name_pre = 'cnn_'
+model_name_post = '_vs_ALL.h5'
 
-# Use multi threaded reader and Matteo's dataset manager for getting test data
-parser = DatasetParser(verbose=False)
-training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size)
+load = False
+
+
+def convert_labels_to_single_class(labels):
+    return np.array([1 if classes_def[np.where(v == 1)[0][0]] == c else 0 for v in labels])
+
+
+def predict(x):
+
+    """
+    Returns the predicted a list of predicted class names using majority voting.
+    Each class corresponds to one entry in the x vector
+    :return: list of class names
+    """
+
+    scores = np.zeros(shape=(len(classes_def), len(x)))
+
+    for idx, c in enumerate(classes_def):
+
+        model_name = model_name_pre + c + model_name_post
+        print('Loading model', model_name, 'and making predictions..')
+        model = load_model(model_name)
+
+        scores[idx] = model.predict(x).reshape(len(x))
+
+    out = []
+
+    for predictions in scores.T:
+        # Majority vote
+        max_idx_for_sample = 0
+        max_prob_for_sample = 0
+        for i, prediction in enumerate(predictions):
+            if prediction > max_prob_for_sample:
+                max_idx_for_sample = i
+
+        out.append(classes_def[max_idx_for_sample])
+
+    return out
+
+
+def train_models():
+
+    # Use multi threaded reader and Matteo's dataset manager for getting test data
+    parser = DatasetParser(verbose=False)
+    test_x, test_y = DatasetManager().get_test()
+
+    for c in classes_def:
+
+        training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size, limit=50)
+
+        print('Building cnn model for class ' + c)
+
+        model = thin_sequential_single(wd)
+
+        model.compile(optimizer=optimizer, loss=loss, metrics=[metrics])
+        model.summary()
+
+        test_y_single = convert_labels_to_single_class(test_y)
+
+        for image_batch, label_batch in training_set:
+
+            print('Loading new batch..')
+
+            y = []
+            for i, label in enumerate(label_batch):
+
+                idx = np.where(label == 1)[0][0]
+                class_for_image = classes_def[idx]
+                if class_for_image == c:
+                    y.append(1)
+                else:
+                    y.append(0)
+
+            y = np.array(y)
+
+            model.fit(
+                x=image_batch,
+                y=y,
+                batch_size=batch_size,
+                epochs=epochs_per_iteration,
+                verbose=1,
+                validation_data=(test_x, test_y_single)
+            )
+
+        print('Binary model for class %s trained successfully' % c)
+
+        model_name = model_name_pre + c + model_name_post
+
+        model.save(model_name)
+
 test_x, test_y = DatasetManager().get_test()
 
 
-for c in classes_def:
-
-    print('Building cnn model for class ' + c)
-
-    model = thin_sequential_single()
-
-    model.compile(optimizer=optimizer, loss=loss, metrics=[metrics])
-    model.summary()
-
-    test_y = np.array([1 if classes_def[np.where(v == 1)[0][0]] == c else 0 for v in test_y])
-    for image_batch, label_batch in training_set:
-
-        print('Loading new batch..')
-
-        y = []
-        for i, label in enumerate(label_batch):
-
-            idx = np.where(label == 1)[0][0]
-            class_for_image = classes_def[idx]
-            if class_for_image == c:
-                y.append(1)
-            else:
-                y.append(0)
-
-        y = np.array(y)
-
-        model.fit(
-            x=image_batch,
-            y=y,
-            batch_size=batch_size,
-            epochs=epochs_per_iteration,
-            verbose=1,
-            validation_data=(test_x, test_y)
-        )
-
-    print('Binary model for class %s trained successfully' % c)
-
-    model_name = 'cnn_' + c + '_vs_ALL.h5'
-
-    model.save(model_name)
-
-
+# train_models()
+print(predict(test_x))

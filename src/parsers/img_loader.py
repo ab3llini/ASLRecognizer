@@ -258,12 +258,13 @@ class TrainingSetIterator:
     :param classes: leave empty to create batches from all the training classes, or specify your own by passing a list
     """
 
-    def __init__(self, parser, chunksize=1000, shuffle=False, seed=None, classes=None):
+    def __init__(self, parser, chunksize=1000, limit=None, shuffle=False, seed=None, classes=None):
         self.parser = parser
         self.processed = 0
         self.batchsize = chunksize
         self.shuffle = shuffle
         self.seed = seed
+        self.limit = limit
         self.classes = classes if classes is not None and len(classes) > 0 else classes_def
         self.x, self.y = self._fetch_image_data()
 
@@ -324,6 +325,8 @@ class TrainingSetIterator:
     #  return the image/class vector pairs
     def __next__(self):
         if self.processed < self.nimages:
+            if self.limit is not None and self.processed >= self.limit:
+                raise StopIteration
 
             self.currentbatch = self._get_next_batch()
             self.currentbatch = self.parser.fetch_tr(DatasetParserMode.PATH_BASED,
