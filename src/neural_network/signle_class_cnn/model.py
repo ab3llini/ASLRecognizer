@@ -43,8 +43,8 @@ model_name_post = '_vs_ALL.h5'
 load = False
 
 
-def convert_labels_to_single_class(labels):
-    return np.array([1 if classes_def[np.where(v == 1)[0][0]] == c else 0 for v in labels])
+def convert_labels_to_single_class(class_, labels):
+    return np.array([1 if classes_def[np.where(v == 1)[0][0]] == class_ else 0 for v in labels])
 
 
 def predict(x):
@@ -97,7 +97,7 @@ def train_models():
         model.compile(optimizer=optimizer, loss=loss, metrics=[metrics])
         model.summary()
 
-        test_y_single = convert_labels_to_single_class(test_y)
+        test_y_single = convert_labels_to_single_class(c, test_y)
 
         for image_batch, label_batch in training_set:
 
@@ -129,6 +129,7 @@ def train_models():
         model_name = model_name_pre + c + model_name_post
 
         model.save(model_name)
+
 
 test_x, test_y = DatasetManager().get_test()
 
