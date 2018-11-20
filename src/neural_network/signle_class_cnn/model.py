@@ -28,8 +28,8 @@ def thin_sequential_single(wd_rate=None):
 iterations = 20
 epochs_per_iteration = 2
 chunk_size = 3000
-batch_size = 50
-lr = 0.5e-2
+batch_size = 10
+lr = 0.5e-4
 optimizer = keras.optimizers.SGD(lr=lr)
 loss = 'binary_crossentropy'
 metrics = keras.metrics.binary_accuracy
@@ -49,8 +49,7 @@ for c in classes_def:
     model.compile(optimizer=optimizer, loss=loss, metrics=[metrics])
     model.summary()
 
-    test_y = [1 if classes_def[np.where(v == 1)[0][0]] == c else 0 for v in test_y]
-
+    test_y = np.array([1 if classes_def[np.where(v == 1)[0][0]] == c else 0 for v in test_y])
     for image_batch, label_batch in training_set:
 
         print('Loading new batch..')
@@ -64,6 +63,8 @@ for c in classes_def:
                 y.append(1)
             else:
                 y.append(0)
+
+        y = np.array(y)
 
         model.fit(
             x=image_batch,
