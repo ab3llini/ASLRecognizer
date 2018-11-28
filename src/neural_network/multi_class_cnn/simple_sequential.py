@@ -6,32 +6,34 @@ import keras
 
 if __name__ == '__main__':
     # load
-    load = True
+    load = False
     # learning rate
-    lr = 0.5e-2
+    lr = 1e-6
     # l2 regularization coefficient
-    wd = 1e-9
+    wd = 1e-3
     # dataset creation
     data = DatasetManager()
     # shuffle train set to give similar variance to each batch
     data.shuffle_train()
+    data.shuffle_test()
     # get tiny test data
     test_x, test_y = data.get_test()
 
     # create keras model
     if load:
-        model = keras.models.load_model("./../../../resources/keras_saves/matteo_simple_thin.h5")
+        model = keras.models.load_model("./../../../resources/keras_saves/matteo_seq.h5")
     else:
-        model = cnn.thin_sequential(wd_rate=wd)
+        model = cnn.sequential2(wd_rate=wd)
     trainer = Kerasmodel(train_set_provider=data,
                          model=model,
                          opt=keras.optimizers.SGD(lr=lr))
-    trainer.train(iterations=20,
+    trainer.train(iterations=10,
                   epochs_per_iteration=2,
                   validation=(test_x, test_y),
                   sleep_time=3*60,
-                  rest_every=6,
-                  train_batch_size=50,
-                  train_set_chunk_size=2000)
-    trainer.save("./../../../resources/keras_saves/matteo_simple_thin.h5")
+                  rest_every=20,
+                  train_batch_size=10,
+                  train_set_chunk_size=5000,
+                  augment=True)
+    trainer.save("./../../../resources/keras_saves/matteo_seq.h5")
 

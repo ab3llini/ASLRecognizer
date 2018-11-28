@@ -1,5 +1,10 @@
 import keras as k
 import time
+import numpy as np
+from numba import jit
+import tqdm
+import skimage.transform as skt
+import src.data.utilities as u
 
 
 class Kerasmodel:
@@ -36,7 +41,7 @@ class Kerasmodel:
         self.mod.summary()
 
     def train(self, iterations, epochs_per_iteration, train_batch_size=20, class_weight=None, validation=None,
-              sleep_time=None, rest_every=None, train_set_chunk_size=10000, reader_workers=8):
+              sleep_time=None, rest_every=None, train_set_chunk_size=10000, reader_workers=8, augment=False):
         """
 
         :param iterations: number of times a chunk is read from the dataset to train the model. Note that if
@@ -70,12 +75,52 @@ class Kerasmodel:
         for i in range(iterations):
             print("############# TRAIN ITERATION ", i)
             x, y = self.train_set_provider.get_batch_train_multithreaded(train_set_chunk_size, reader_workers)
+            if augment:
+                x, y = self.__augment(x, y, 1)
             self.mod.fit(x=x, y=y, batch_size=train_batch_size, epochs=epochs_per_iteration, verbose=1,
                          validation_data=validation, class_weight=class_weight)
 
             if rest_every is not None and (i+1) % rest_every == 0:
                 print("############# TIME TO REST A BIT... #############")
                 time.sleep(sleep_time)
+
+    def __augment(self, x, y, n):
+        samples = len(x)
+        for i in tqdm.tqdm(range(samples)):
+            newx, newy = self.__aug_shift(x[i], y[i], n)
+            x = np.concatenate((x, newx))
+            y = np.concatenate((y, newy))
+        return x, y
+
+    @jit
+    def __aug_shift(self, x, y, n):
+        ris = []
+        risy = []
+        shape = x.shape
+        for _ in range(n):
+            newx = np.zeros(shape, dtype=np.int16)
+
+            lumin_change = 0.2 + np.random.rand() * 1.5
+            pixels = np.random.randint(1, 6)
+            dir = np.random.randint(0, 4)
+            if dir == 0:  # left
+                newx[:, :shape[1] - pixels] = x[:, pixels:shape[1]]
+                newx[:, shape[1] - pixels:] = x[:, 0:pixels]
+            if dir == 1:  # right
+                newx[:, pixels:shape[1]] = x[:, :shape[1] - pixels]
+                newx[:, 0:pixels] = x[:, shape[1] - pixels:]
+            if dir == 2:  # up
+                newx[:shape[0] - pixels, :] = x[pixels:shape[0], :]
+                newx[shape[0] - pixels:, :] = x[:pixels, :]
+            if dir == 3:  # down
+                newx[pixels:shape[0], :] = x[:shape[0] - pixels, :]
+                newx[:pixels, :] = x[shape[0] - pixels:, :]
+            newx = newx * lumin_change
+            newx[newx > 255] = 255
+            newx = np.array(np.floor(newx), dtype=np.uint8)
+            ris.append(newx)
+            risy.append(y)
+        return np.array(ris), np.array(risy)
 
     def save(self, path):
         self.mod.save(path)

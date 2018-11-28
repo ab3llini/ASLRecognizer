@@ -242,6 +242,24 @@ class DatasetManager:
         self.train_x = rx
         self.train_y = np.array(ry)
 
+    def shuffle_test(self):
+        """
+        Shuffles the elements in the test set and the corresponding classes by keeping the relative order of the pairs.
+        :return: nothing
+        """
+        x = self.test_x
+        y = self.test_y
+        rx = []
+        ry = []
+        ids = list(range(len(x)))
+        for i in range(len(x)):
+            rnd = np.random.randint(0, len(ids))
+            rx.append(x[ids[rnd]])
+            ry.append(y[ids[rnd]])
+            ids.pop(rnd)
+        self.test_x = rx
+        self.test_y = np.array(ry)
+
 
 class EndOfDatasetException(Exception):
     MSG = "All the data were already read and this object doesn't have the 'Rotational' attribute set. Try \n" \

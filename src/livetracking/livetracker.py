@@ -1,7 +1,7 @@
 import numpy as np
 import src.livetracking.model.AllAModel as AllAModel
 import src.livetracking.model.RandomModel as RandomModel
-import src.livetracking.model.KerasModel as KerasModel
+import src.livetracking.model.HarmonicKerasModel as HarmonicKerasModel
 import cv2
 import keras
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from src.data.dataset_manager import DatasetManager
 
 # to change
-model = KerasModel.KerasModel(keras.models.load_model("./../../resources/keras_saves/matteo_simple_thin.h5"))
+model = HarmonicKerasModel.HarmonicKerasModel(keras.models.load_model("./../../resources/keras_saves/matteo_simple_thin_moredata.h5"), 10)
 classes = DatasetManager.classes_list_single_letter
 cap = cv2.VideoCapture(0)
 shape = None

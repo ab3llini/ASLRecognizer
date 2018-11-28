@@ -63,5 +63,5 @@ def merge_generator_discr(gen, discr):
 def recreate_gen(net):
     gen_new = generator()
     for i in range(len(gen_new.layers)):
-        gen_new.layers[i].set_weights(net.layers[i].get_weights())
+        gen_new.layers[i].set_weights(net.layers[1].layers[i].get_weights())
     return gen_new

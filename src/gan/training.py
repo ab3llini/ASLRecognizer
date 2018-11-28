@@ -6,7 +6,7 @@ import keras
 
 dm = dataset_manager.DatasetManager()
 dm.shuffle_train()
-size = 1000
+size = 100
 x, _ = dm.get_batch_train_multithreaded(size=size, workers=8)
 y = np.ones(size)
 
@@ -24,9 +24,9 @@ x, y = utilities.shuffle2(x, y)
 discr = cnn.discriminator()
 gen = cnn.generator()
 
-opt_discr = keras.optimizers.Adam(lr=1e-3)
+opt_discr = keras.optimizers.Adam(lr=1e-5)
 loss = keras.losses.binary_crossentropy
-opt_gen = keras.optimizers.Adam(lr=1e-3)
+opt_gen = keras.optimizers.Adam(lr=1e-6)
 
 discr.compile(opt_discr, loss, metrics=['accuracy'])
 print(len(discr.layers))
@@ -34,17 +34,23 @@ discr.summary()
 
 
 while True:
-    print("DISCRIMINANT")
-    discr.fit(x=x, y=y, batch_size=50, epochs=1)
+    print("TRAINING DISCRIMINANT")
+    discr.fit(x=x, y=y, batch_size=50, epochs=3)
     net = cnn.merge_generator_discr(gen, discr)
     print("NETS ATTACHED")
     net.compile(opt_gen, loss, metrics=['accuracy'])
-    net.summary()
-    net.fit(x=input_noise, y=output_noise, epochs=1, batch_size=10)
+    net.fit(x=input_noise, y=output_noise, epochs=10, batch_size=10)
     gen = cnn.recreate_gen(net)
-    pred = np.floor(gen.predict(input_noise[0]).squeeze())
-    pred = np.array(pred, np.uint8)
-    utilities.showimage(pred)
+    print("GENERATOR DETACHED")
+    some_predictions = gen.predict(input_noise[:100])
+    some_predictions[some_predictions > 255] = 255
+    some_predictions[some_predictions < 0] = 0
+    some_predictions = np.floor(some_predictions).squeeze()
+    pred = np.array(some_predictions, np.uint8)
+    y_new = np.zeros(100)
+    utilities.showimage(pred[0])
+    x = np.concatenate((x, pred))
+    y = np.concatenate((y, y_new))
 
 
 
