@@ -12,15 +12,15 @@ import operator
 def thin_sequential_single(wd_rate=None):
     reg = keras.regularizers.l2(wd_rate)
     inputs = kl.Input(shape=[200, 200, 3])
-    x = kl.Conv2D(filters=20, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(inputs)
-    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
-    x = kl.Conv2D(filters=20, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
-    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
-    x = kl.Conv2D(filters=20, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.Conv2D(filters=15, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(inputs)
     x = kl.MaxPooling2D(pool_size=[2, 2])(x)
     x = kl.Conv2D(filters=15, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
     x = kl.MaxPooling2D(pool_size=[2, 2])(x)
     x = kl.Conv2D(filters=10, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=10, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
+    x = kl.MaxPooling2D(pool_size=[2, 2])(x)
+    x = kl.Conv2D(filters=5, kernel_size=[5, 5], use_bias=True, activation='relu', kernel_regularizer=reg)(x)
     x = kl.Flatten()(x)
     x = kl.Dense(units=50, activation='relu', use_bias=True)(x)
     x = kl.Dropout(rate=0.20)(x)
@@ -28,9 +28,9 @@ def thin_sequential_single(wd_rate=None):
     return keras.Model(inputs=(inputs, ), outputs=(x, ))
 
 
-iterations = 20
-epochs_per_iteration = 2
-chunk_size = 3000
+iterations = 5
+epochs_per_iteration = 1
+chunk_size = 5800
 batch_size = 50
 wd = 1e-9
 lr = 0.5e-4
@@ -88,8 +88,6 @@ def train_models():
 
     for c in classes_def:
 
-        training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size)
-
         print('Building cnn model for class ' + c)
 
         model = thin_sequential_single(wd)
@@ -99,30 +97,41 @@ def train_models():
 
         test_y_single = convert_labels_to_single_class(c, test_y)
 
-        for image_batch, label_batch in training_set:
+        for epoch in range(iterations):
 
-            print('Loading new batch..')
+            print('*' * 200)
+            print('Starting epoch', epoch)
 
-            y = []
-            for i, label in enumerate(label_batch):
+            training_set = TrainingSetIterator(parser=parser, shuffle=True, seed=5, chunksize=chunk_size)
 
-                idx = np.where(label == 1)[0][0]
-                class_for_image = classes_def[idx]
-                if class_for_image == c:
-                    y.append(1)
-                else:
-                    y.append(0)
+            for image_batch, label_batch in training_set:
 
-            y = np.array(y)
+                print('Loading new batch..')
 
-            model.fit(
-                x=image_batch,
-                y=y,
-                batch_size=batch_size,
-                epochs=epochs_per_iteration,
-                verbose=1,
-                validation_data=(test_x, test_y_single)
-            )
+                y = []
+                for i, label in enumerate(label_batch):
+
+                    idx = np.where(label == 1)[0][0]
+                    class_for_image = classes_def[idx]
+                    if class_for_image == c:
+                        y.append(1)
+                    else:
+                        y.append(0)
+
+                y = np.array(y)
+
+                model.fit(
+                    x=image_batch,
+                    y=y,
+                    batch_size=batch_size,
+                    epochs=epochs_per_iteration,
+                    verbose=1,
+                    class_weight={
+                        1: 28,
+                        0: 1
+                    },
+                    validation_data=(test_x, test_y_single)
+                )
 
         print('Binary model for class %s trained successfully' % c)
 
