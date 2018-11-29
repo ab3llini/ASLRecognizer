@@ -89,9 +89,18 @@ class DataAugmentation:
      return enhanced_image
 
  def __zoom_image(self, im, n):
-     im_crop = im.crop((0, 0, 500, 500))
-     im_crop = im_crop.resize(im.size)
+     factor = rnd.randrange(500, 700)
+     factor_1 = rnd.randrange(200, 400)
+     if 221 <= n <= 240:
+         im_crop = im.crop((0, 0, factor, factor))
+     if 241 <= n <= 260:
+         im_crop = im.crop((0, factor_1, factor, 0))
+     if 261 <= n <= 280:
+         im_crop = im.crop((factor_1, factor_1, 0, 0))
+     if 281 <= n <= 300:
+         im_crop = im.crop((factor_1, 0, 0, factor))
 
+     im_crop = im_crop.resize(im.size)
      return im_crop
 
  def augment_data(self, images_count):
