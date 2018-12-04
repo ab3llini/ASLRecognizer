@@ -3,6 +3,7 @@ import time
 import numpy as np
 from numba import jit
 import tqdm
+from sklearn.metrics import classification_report
 import skimage.transform as skt
 import src.data.utilities as u
 
@@ -76,7 +77,7 @@ class Kerasmodel:
             print("############# TRAIN ITERATION ", i)
             x, y = self.train_set_provider.get_batch_train_multithreaded(train_set_chunk_size, reader_workers)
             if augment:
-                x, y = self.__augment(x, y, 1)
+                x, y = self.__augment(x, y, 4)
             self.mod.fit(x=x, y=y, batch_size=train_batch_size, epochs=epochs_per_iteration, verbose=1,
                          validation_data=validation, class_weight=class_weight)
 
@@ -120,6 +121,7 @@ class Kerasmodel:
             newx = np.array(np.floor(newx), dtype=np.uint8)
             ris.append(newx)
             risy.append(y)
+
         return np.array(ris), np.array(risy)
 
     def save(self, path):
@@ -127,3 +129,10 @@ class Kerasmodel:
 
     def predict(self, x):
         return self.mod.predict(x).squeeze()
+
+    def evaluate(self, x, y):
+        y_pred = self.mod.predict(x)
+        y_p = np.zeros(y_pred.shape)
+        for i in range(len(y_pred)):
+            y_p[i][np.argmax(y_pred[i])] = 1
+        print(classification_report(y, y_p))

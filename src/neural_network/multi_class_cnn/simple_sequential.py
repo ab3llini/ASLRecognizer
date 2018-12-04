@@ -6,7 +6,7 @@ import keras
 
 if __name__ == '__main__':
     # load
-    load = False
+    load = True
     # learning rate
     lr = 1e-6
     # l2 regularization coefficient
@@ -21,13 +21,13 @@ if __name__ == '__main__':
 
     # create keras model
     if load:
-        model = keras.models.load_model("./../../../resources/keras_saves/matteo_seq.h5")
+        model = keras.models.load_model("./../../../resources/keras_saves/matteo_simple_thin_moredata.h5")
     else:
         model = cnn.sequential2(wd_rate=wd)
     trainer = Kerasmodel(train_set_provider=data,
                          model=model,
                          opt=keras.optimizers.SGD(lr=lr))
-    trainer.train(iterations=10,
+    trainer.train(iterations=0,
                   epochs_per_iteration=2,
                   validation=(test_x, test_y),
                   sleep_time=3*60,
@@ -35,5 +35,7 @@ if __name__ == '__main__':
                   train_batch_size=10,
                   train_set_chunk_size=5000,
                   augment=True)
-    trainer.save("./../../../resources/keras_saves/matteo_seq.h5")
+
+    trainer.evaluate(test_x, test_y)
+    # trainer.save("./../../../resources/keras_saves/matteo_simple_thin_moredata.h5")
 
