@@ -1,7 +1,7 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-# ASLRecognizer
+
+# ASLRecognizer [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CodeFactor](https://www.codefactor.io/repository/github/ab3llini/aslrecognizer/badge)](https://www.codefactor.io/repository/github/ab3llini/aslrecognizer)
 Machine Learning used to translate hand gestures of the American Sign Language into meaningful text sequences.
 
 ## Group
